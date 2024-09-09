@@ -1,0 +1,38 @@
+{
+    "name": "ts-to-mock-server",
+    "version": "1.0.0",
+    "description": "TypeScript接口解析项目",
+    "scripts": {
+        "dev": "nodemon",
+        "test": "vitest",
+        "start": "node src/app.js",
+        "start:pm2": "pm2 start src/app.js --name ts-to-mock-server",
+        "start:pm2:3002": "PORT=3002 pm2 start src/app.js --name ts-to-mock-server",
+        "stop:pm2": "pm2 stop ts-to-mock-server",
+        "restart:pm2": "pm2 restart ts-to-mock-server",
+        "delete:pm2": "pm2 delete ts-to-mock-server"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "dependencies": {
+        "cors": "^2.8.5",
+        "express": "^4.19.2",
+        "mockjs": "^1.1.0",
+        "multer": "1.4.5-lts.1"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.25.2",
+        "@babel/parser": "^7.25.6",
+        "@babel/preset-typescript": "^7.24.7",
+        "@babel/traverse": "^7.25.6",
+        "@babel/types": "^7.25.6",
+        "@types/babel__traverse": "^7.20.6",
+        "@types/mockjs": "^1.0.10",
+        "@types/node": "^22.5.3",
+        "nodemon": "^3.1.4",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.5.4",
+        "vitest": "^0.20.3"
+    }
+}
