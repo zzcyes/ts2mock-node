@@ -19,12 +19,16 @@ function wf(name, content) {
 
 class MockValueGenerator {
   tsInterfaceAstMap = new Map();
-  constructor(typeAnnotation, tsInterfaceAstMap, property) {
+  deferredReferences = new Map();
+  constructor(typeAnnotation, tsInterfaceAstMap, property, options) {
     this.typeAnnotation = typeAnnotation;
     this.tsInterfaceAstMap = tsInterfaceAstMap;
     this.visitedTypes = new Set(); // 新增
     this.property = property;
     this.mockKey = property?.key?.name ?? property?.key?.value;
+    this.options = {
+      maxDepth: options?.maxDepth ?? 2,
+    };
     // this.mockValue = this.createMockValue(typeAnnotation);
     // console.debug(
     //   "【MockValueGenerator】",
@@ -35,7 +39,28 @@ class MockValueGenerator {
   }
 
   getMockValue() {
-    return this.createMockValue(this.typeAnnotation);
+    const result = this.createMockValue(this.typeAnnotation);
+    this.resolveDeferredReferences(result);
+    return result;
+  }
+
+  resolveDeferredReferences(obj, depth = 0) {
+    const maxDepth = this.options.maxDepth;
+    if (typeof obj !== "object" || obj === null || depth > maxDepth) return;
+
+    for (const [key, value] of Object.entries(obj)) {
+      if (this.deferredReferences.has(value)) {
+        const { typeName, typeAnnotation } = this.deferredReferences.get(value);
+        this.visitedTypes.delete(typeName); // 临时移除，允许重新生成
+        obj[key] = this.createMockValue(typeAnnotation);
+        this.visitedTypes.add(typeName); // 重新添加
+        // 递归解析新生成的值
+        this.resolveDeferredReferences(obj[key], depth + 1, maxDepth);
+      } else if (typeof value === "object" && value !== null) {
+        // 递归解析嵌套对象
+        this.resolveDeferredReferences(value, depth + 1, maxDepth);
+      }
+    }
   }
 
   // 主生成函数
@@ -175,11 +200,11 @@ class MockValueGenerator {
       );
     }
 
-    // TODO: 目前无法处理循环引用，需要优化
+    // TODO: 目前处理循环引用是给出最大层级，已经够用了，后续看是否还需要优化
     if (this.visitedTypes.has(typeName)) {
-      // 遇到循环引用，返回一个占位符
-      // console.debug(`【循环引用检测】：${typeName}`);
-      return `{ /* circular reference */ }`;
+      const placeholder = {};
+      this.deferredReferences.set(placeholder, { typeName, typeAnnotation });
+      return placeholder;
     }
 
     this.visitedTypes.add(typeName); // 标记为已处理
